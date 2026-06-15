@@ -42,6 +42,28 @@
                         onbidsuccess={handleBidSuccess}>
                     </c-bid-form>
                 </template>
+                <div class="bid-history slds-m-top_large">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Bid History</h3>
+                    <template if:true={hasBids}>
+                        <ul class="bid-list">
+                            <template for:each={bids} for:item="bid">
+                                <li key={bid.id} class={bid.rowClass}>
+                                    <div class="bid-row-content">
+                                        <span class="bidder-name">{bid.bidderName}</span>
+                                        <span class="bid-amount">{bid.amountDisplay}</span>
+                                    </div>
+                                    <span class="bid-time slds-text-body_small slds-text-color_weak">{bid.formattedBidTime}</span>
+                                    <template if:true={bid.isHighest}>
+                                        <span class="highest-badge slds-badge slds-badge_success">Highest</span>
+                                    </template>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+                    <template if:false={hasBids}>
+                        <p class="slds-text-body_regular slds-text-color_weak">No bids yet.</p>
+                    </template>
+                </div>
             </div>
         </lightning-card>
     </template>

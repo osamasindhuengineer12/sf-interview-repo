@@ -35,10 +35,40 @@ private class AuctionListingControllerTest {
     @IsTest
     static void testGetListingsReturnsAllListings() {
         Test.startTest();
-        AuctionListingController.ListingsResult result = AuctionListingController.getListings();
+        AuctionListingController.ListingsResult result = AuctionListingController.getListings(null, null);
         Test.stopTest();
 
         System.assertEquals(3, result.listings.size(), 'Should return all listings, including closed');
+    }
+
+    @IsTest
+    static void testGetListingsFiltersByCategory() {
+        Test.startTest();
+        AuctionListingController.ListingsResult result = AuctionListingController.getListings(null, 'Tractor');
+        Test.stopTest();
+
+        System.assertEquals(1, result.listings.size(), 'Should return only tractor listings');
+        System.assertEquals('John Deere 8R Tractor', result.listings[0].title);
+    }
+
+    @IsTest
+    static void testGetListingsFiltersBySearch() {
+        Test.startTest();
+        AuctionListingController.ListingsResult result = AuctionListingController.getListings('harvest', null);
+        Test.stopTest();
+
+        System.assertEquals(1, result.listings.size(), 'Should match description text');
+        System.assertEquals('Case IH Combine', result.listings[0].title);
+    }
+
+    @IsTest
+    static void testGetListingsFiltersBySearchAndCategory() {
+        Test.startTest();
+        AuctionListingController.ListingsResult result = AuctionListingController.getListings('Deere', 'Tractor');
+        Test.stopTest();
+
+        System.assertEquals(1, result.listings.size(), 'Should match title and category');
+        System.assertEquals('John Deere 8R Tractor', result.listings[0].title);
     }
 
     @IsTest

@@ -34,7 +34,8 @@
                             <c-auction-listing-card
                                 key={listing.id}
                                 listing={listing}
-                                onselect={handleListingSelect}>
+                                selected={listing.isSelected}
+                                onlistingselect={handleListingSelect}>
                             </c-auction-listing-card>
                         </template>
                         <template if:true={noListings}>

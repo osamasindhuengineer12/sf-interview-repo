@@ -24,9 +24,15 @@ export default class AuctionApp extends LightningElement {
 
     loadListings() {
         this.isLoading = true;
-        getListings()
+        return getListings({
+            searchTerm: this.searchTerm,
+            category: this.selectedCategory
+        })
             .then(result => {
-                this.listings = result.listings;
+                this.listings = result.listings.map(listing => ({
+                    ...listing,
+                    isSelected: listing.id === this.selectedListingId
+                }));
                 this.isLoading = false;
             })
             .catch(error => {
@@ -46,8 +52,30 @@ export default class AuctionApp extends LightningElement {
     }
 
     handleListingSelect(event) {
-        this.selectedListingId = event.detail.listingId;
+        const listingId = event.detail?.listingId;
+        if (!listingId) {
+            return;
+        }
         this.showCreateForm = false;
+        if (this.selectedListingId === listingId) {
+            return;
+        }
+
+        this.updateSelectedListing(listingId);
+    }
+
+    updateSelectedListing(listingId) {
+        this.listings = this.listings.map(listing => ({
+            ...listing,
+            isSelected: listing.id === listingId
+        }));
+
+        // Remount detail panel so a fresh load runs for the newly selected listing.
+        this.selectedListingId = null;
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        Promise.resolve().then(() => {
+            this.selectedListingId = listingId;
+        });
     }
 
     handleShowCreateForm() {

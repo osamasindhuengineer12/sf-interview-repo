@@ -22,6 +22,49 @@
     padding-top: 1rem;
 }
 
+.bid-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.bid-row {
+    padding: 0.75rem;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    background: #fff;
+}
+
+.bid-row_highest {
+    border-color: #2e7d32;
+    background: #e8f5e9;
+}
+
+.bid-row-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.bidder-name {
+    font-weight: 600;
+}
+
+.bid-amount {
+    font-weight: 700;
+    color: #2e7d32;
+}
+
+.bid-row_highest .bid-amount {
+    color: #1b5e20;
+}
+
+.highest-badge {
+    margin-top: 0.5rem;
+}
+
 .category-tractor { background-color: #e8f5e9; color: #1b5e20; }
 .category-combine { background-color: #e3f2fd; color: #0d47a1; }
 .category-implement { background-color: #fff3e0; color: #e65100; }

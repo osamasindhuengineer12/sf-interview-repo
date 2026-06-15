@@ -11,13 +11,12 @@ const CATEGORY_COLORS = {
 
 export default class AuctionListingCard extends LightningElement {
     @api listing;
+    @api selected = false;
 
     handleClick() {
         if (!this.listing) return;
-        this.dispatchEvent(new CustomEvent('select', {
-            detail: { listingId: this.listing.id },
-            bubbles: true,
-            composed: true
+        this.dispatchEvent(new CustomEvent('listingselect', {
+            detail: { listingId: this.listing.id }
         }));
     }
 
@@ -36,9 +35,14 @@ export default class AuctionListingCard extends LightningElement {
     }
 
     get cardClass() {
-        return this.listing && this.listing.status === 'Closed'
-            ? 'listing-card listing-card_closed slds-radius_medium'
-            : 'listing-card slds-radius_medium';
+        const classes = ['listing-card', 'slds-radius_medium'];
+        if (this.listing && this.listing.status === 'Closed') {
+            classes.push('listing-card_closed');
+        }
+        if (this.selected) {
+            classes.push('listing-card_selected');
+        }
+        return classes.join(' ');
     }
 
     get categoryBadgeClass() {

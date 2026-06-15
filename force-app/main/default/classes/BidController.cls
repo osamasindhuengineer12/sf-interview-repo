@@ -7,6 +7,50 @@ public with sharing class BidController {
         @AuraEnabled public String listingId { get; set; }
     }
 
+    public class BidHistoryWrapper {
+        @AuraEnabled public String id { get; set; }
+        @AuraEnabled public String bidderName { get; set; }
+        @AuraEnabled public Decimal amount { get; set; }
+        @AuraEnabled public String bidTime { get; set; }
+        @AuraEnabled public Boolean isHighest { get; set; }
+    }
+
+    @AuraEnabled
+    public static List<BidHistoryWrapper> getBidHistory(String listingId) {
+        if (String.isBlank(listingId)) {
+            throw new AuraHandledException('Listing ID is required.');
+        }
+
+        Auction_Listing__c listing = [
+            SELECT Current_Bid__c
+            FROM Auction_Listing__c
+            WHERE Id = :listingId
+            LIMIT 1
+        ];
+
+        List<Bid__c> bids = [
+            SELECT Id, Bidder_Name__c, Amount__c, Bid_Time__c
+            FROM Bid__c
+            WHERE Auction_Listing__c = :listingId
+            ORDER BY Amount__c DESC, Bid_Time__c DESC
+        ];
+
+        List<BidHistoryWrapper> result = new List<BidHistoryWrapper>();
+        for (Bid__c bid : bids) {
+            BidHistoryWrapper wrapper = new BidHistoryWrapper();
+            wrapper.id = bid.Id;
+            wrapper.bidderName = bid.Bidder_Name__c;
+            wrapper.amount = bid.Amount__c;
+            wrapper.bidTime = bid.Bid_Time__c != null
+                ? bid.Bid_Time__c.formatGmt('yyyy-MM-dd\'T\'HH:mm:ss\'Z\'')
+                : null;
+            wrapper.isHighest = listing.Current_Bid__c != null
+                && bid.Amount__c == listing.Current_Bid__c;
+            result.add(wrapper);
+        }
+        return result;
+    }
+
     @AuraEnabled
     public static BidWrapper placeBid(
         String listingId,
@@ -35,7 +79,7 @@ public with sharing class BidController {
                 ? listing.Current_Bid__c
                 : listing.Starting_Price__c;
 
-            if (amount >= threshold) {
+            if (amount <= threshold) {
                 throw new AuraHandledException(
                     'Bid must be greater than the current bid of ' + threshold
                 );
@@ -44,6 +88,14 @@ public with sharing class BidController {
             listing.Current_Bid__c = amount;
             listing.Current_Bidder__c = bidderName;
             update listing;
+
+            Bid__c bid = new Bid__c(
+                Auction_Listing__c = listing.Id,
+                Bidder_Name__c = bidderName,
+                Amount__c = amount,
+                Bid_Time__c = System.now()
+            );
+            insert bid;
 
             Bid_Placed__e evt = new Bid_Placed__e(
                 Listing_Id__c = listing.Id,
@@ -54,7 +106,7 @@ public with sharing class BidController {
             EventBus.publish(evt);
 
             BidWrapper result = new BidWrapper();
-            result.id = listing.Id;
+            result.id = bid.Id;
             result.bidderName = bidderName;
             result.amount = amount;
             result.listingId = listing.Id;

@@ -18,13 +18,28 @@ public with sharing class AuctionListingController {
     }
 
     @AuraEnabled
-    public static ListingsResult getListings() {
-        List<Auction_Listing__c> listings = Database.query(
-            'SELECT Id, Title__c, Description__c, Category__c, ' +
+    public static ListingsResult getListings(String searchTerm, String category) {
+        String trimmedSearch = String.isBlank(searchTerm) ? null : searchTerm.trim().toLowerCase();
+        String trimmedCategory = String.isBlank(category) ? null : category.trim();
+
+        String soql = 'SELECT Id, Title__c, Description__c, Category__c, ' +
             'Starting_Price__c, Current_Bid__c, Current_Bidder__c, ' +
-            'Status__c, Ends_At__c, Image_URL__c ' +
-            'FROM Auction_Listing__c ORDER BY Ends_At__c ASC'
-        );
+            'Status__c, Ends_At__c, Image_URL__c FROM Auction_Listing__c';
+        if (trimmedCategory != null) {
+            soql += ' WHERE Category__c = :trimmedCategory';
+        }
+        soql += ' ORDER BY Ends_At__c ASC';
+
+        List<Auction_Listing__c> listings = Database.query(soql);
+        if (trimmedSearch != null) {
+            List<Auction_Listing__c> filtered = new List<Auction_Listing__c>();
+            for (Auction_Listing__c listing : listings) {
+                if (matchesSearch(listing, trimmedSearch)) {
+                    filtered.add(listing);
+                }
+            }
+            listings = filtered;
+        }
 
         ListingsResult result = new ListingsResult();
         result.listings = new List<ListingWrapper>();
@@ -33,6 +48,11 @@ public with sharing class AuctionListingController {
             result.listings.add(toWrapper(l));
         }
         return result;
+    }
+
+    private static Boolean matchesSearch(Auction_Listing__c listing, String search) {
+        return (listing.Title__c != null && listing.Title__c.toLowerCase().contains(search))
+            || (listing.Description__c != null && listing.Description__c.toLowerCase().contains(search));
     }
 
     @AuraEnabled

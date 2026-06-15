@@ -113,4 +113,38 @@ private class BidControllerTest {
         System.assertEquals(14000, updated.Current_Bid__c);
         System.assertEquals('John Doe', updated.Current_Bidder__c);
     }
+
+    @IsTest
+    static void testPlaceBidCreatesBidRecord() {
+        Auction_Listing__c listing = [SELECT Id FROM Auction_Listing__c LIMIT 1];
+
+        Test.startTest();
+        BidController.BidWrapper result = BidController.placeBid(listing.Id, 'Jane Smith', 15000);
+        Test.stopTest();
+
+        List<Bid__c> bids = [SELECT Id, Bidder_Name__c, Amount__c FROM Bid__c WHERE Auction_Listing__c = :listing.Id];
+        System.assertEquals(1, bids.size(), 'Should create one bid record');
+        System.assertEquals(result.id, bids[0].Id);
+        System.assertEquals('Jane Smith', bids[0].Bidder_Name__c);
+        System.assertEquals(15000, bids[0].Amount__c);
+    }
+
+    @IsTest
+    static void testGetBidHistoryReturnsBidsWithHighestHighlighted() {
+        Auction_Listing__c listing = [SELECT Id FROM Auction_Listing__c LIMIT 1];
+
+        BidController.placeBid(listing.Id, 'Jane Smith', 12000);
+        BidController.placeBid(listing.Id, 'John Doe', 14000);
+
+        Test.startTest();
+        List<BidController.BidHistoryWrapper> history = BidController.getBidHistory(listing.Id);
+        Test.stopTest();
+
+        System.assertEquals(2, history.size(), 'Should return all bids for the listing');
+        System.assertEquals(14000, history[0].amount, 'Highest bid should be first');
+        System.assertEquals(true, history[0].isHighest, 'Leading bid should be highlighted');
+        System.assertEquals(false, history[1].isHighest, 'Lower bid should not be highlighted');
+        System.assertEquals('John Doe', history[0].bidderName);
+        System.assertEquals('Jane Smith', history[1].bidderName);
+    }
 }
